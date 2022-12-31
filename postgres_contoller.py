@@ -80,35 +80,6 @@ class PostgresController:
         """
         The method casts the given pd.Dataframe column
         which contains a nested structure into a JSON object.
-
-        example:
-
-        data = {
-            'userId': 31788,
-            'platform': 'APP_ANDROID',
-            'durationMs': 3249,
-            'position': 18,
-            'timestamp': 1568308979000,
-            'owners': {
-                    'user': [11540]
-                    },
-            'resources': {
-                    'USER_PHOTO': [6121]
-                    }
-                }
-
-        df = pd.DataFrame(data)
-
-
-        self.insert_dataframe(df, "table_name")  --- > WRONG.
-        It will return the error :
-        psycopg2.ProgrammingError: can't adapt type 'dict'
-
-        CORRECT:
-
-        df["owners"] = df.owners.map(pg.cast_dict_to_json)
-        df["resources"] = df.resources.map(pg.cast_dict_to_json)
-        self.insert_dataframe(df, "table_name")
         """
         return json.dumps(dictionary, ensure_ascii=False)
 
@@ -117,8 +88,47 @@ class PostgresController:
         df: pd.DataFrame,
         table_name: str,
         table_schema: str = "public",
+        fields: List[str] = None,
     ):
+        """
+        Parameters
+        ----------
+        df:
+            pandas DataFrame
+        table_name:
+            name of the table in database
+        table_schema:
+            name of the schema in database, by default it's "public"
+        fields:
+            The list of fields that contain JSON structure inside and need to be cast to a JSON object.
+
+        Example
+        ----------
+        data = {
+            'userId': 31788,
+            'platform': 'APP_ANDROID',
+            'durationMs': 3249,
+            'position': 18,
+            'timestamp': 1568308979000,
+            'owners': {
+                    'user': 11540
+                    },
+            'resources': {
+                    'USER_PHOTO': 6121
+                    }
+                }
+
+        df = pd.DataFrame(data)
+
+        self.insert_dataframe(df, "table_name",['owners','resources')
+        """
+
         self._check_and_reconnect()
+
+        if fields:
+            for field in fields:
+                dataframe[field] = dataframe[field].map(self.cast_dict_to_json)
+
         columns, rows = self._split_to_rows_columns(df)
         start = datetime.now()
 

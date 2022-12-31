@@ -104,6 +104,14 @@ class PostgresController:
 
         Example
         ----------
+        pg = PostgresController(
+                database="database",
+                user="user",
+                password="password",
+                host="localhost",
+                port=5433,
+            )
+
         data = {
             'userId': 31788,
             'platform': 'APP_ANDROID',
@@ -120,7 +128,7 @@ class PostgresController:
 
         df = pd.DataFrame(data)
 
-        self.insert_dataframe(df, "table_name",['owners','resources')
+        pg.insert_dataframe(df, "table_name",['owners','resources')
         """
 
         self._check_and_reconnect()
